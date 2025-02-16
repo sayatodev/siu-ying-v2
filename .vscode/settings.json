@@ -6,20 +6,16 @@
 		"source.fixAll": "explicit",
 		"source.organizeImports": "never"
 	},
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true,
-  "editor.trimAutoWhitespace": false,
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact"
-  ],
-  "files.eol": "\n",
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnSave": true,
+	"editor.trimAutoWhitespace": false,
+	"eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+	"files.eol": "\n",
 	"files.insertFinalNewline": true,
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
-  "files.insertFinalNewline": true,
+	"files.insertFinalNewline": true,
 	"files.eol": "\n",
-  "npm.packageManager": "pnpm"
+	"npm.packageManager": "pnpm",
+	"cSpell.words": ["BAFS", "interactionaction", "Supabase", "Timeslot"]
 }
