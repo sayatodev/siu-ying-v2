@@ -37,10 +37,10 @@ export default {
             {
                 run: ({ elective_1x, elective_2x, elective_3x }) => {
                     return Object.values({ elective_1x, elective_2x, elective_3x }).every(
-                        elective => !elective || Object.keys(CONSTS.CALENDAR.STRINGS.SUBJECT).includes(elective)
+                        elective => !elective || Object.keys(CONSTS.CALENDAR.LOCALE_STRINGS.ZH_TRAD.SUBJECT).includes(elective)
                     )
                 },
-                message: `Invalid elective. Valid electives are: \`${Object.keys(CONSTS.CALENDAR.STRINGS.SUBJECT).join("`, `")}\``
+                message: `Invalid elective. Valid electives are: \`${Object.keys(CONSTS.CALENDAR.LOCALE_STRINGS.ZH_TRAD.SUBJECT).join("`, `")}\``
             },
         ]
 

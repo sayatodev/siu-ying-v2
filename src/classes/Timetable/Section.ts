@@ -2,7 +2,7 @@ import type { Moment } from "moment-timezone";
 import { CONSTS } from "../../consts.js";
 import { TimeslotType } from "../../enums/calendar.js";
 
-const { STRINGS } = CONSTS.CALENDAR;
+const STRINGS = CONSTS.CALENDAR.LOCALE_STRINGS.ZH_TRAD;
 
 // Represents a section in the timetable of a day
 export class Section {
@@ -51,7 +51,7 @@ export class LessonSection extends Section {
             const userElective = data.userElectives?.[electiveGroup] ? (
                 STRINGS.SUBJECT[data.userElectives[electiveGroup] as keyof typeof STRINGS.SUBJECT] ?? data.userElectives[electiveGroup]
             ) : null;
-            
+
             // Set the title to the elective group, with the user's elective in brackets if available
             this.title = electiveGroup in STRINGS.SUBJECT ? STRINGS.SUBJECT[electiveGroup] + (
                 userElective ? ` (${userElective})` : ""

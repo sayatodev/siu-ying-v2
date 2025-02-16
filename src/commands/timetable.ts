@@ -10,6 +10,7 @@ import type { Moment } from 'moment-timezone';
 import moment from 'moment-timezone';
 import { User } from '../classes/Database/User.js';
 import { TimetableQuery } from '../classes/Timetable/TimetableQuery.js';
+import { Warnings } from '../classes/Weather/Warnings.js';
 import { CONFIG } from '../config.js';
 import { SiuYingEmbed } from '../util/embed.js';
 import SettingsViewCommand from './settings/view.subcommand.js';
@@ -80,6 +81,14 @@ export async function customExecute(
 		embeds: [result.toEmbed()],
 		components: result.success ? getTimetableActions(cls, inputMoment) : [],
 	});
+		
+	const weatherWarnings = (await Warnings.fetch()).filterTyphoonOrRainstorm();
+	if (weatherWarnings.length) {
+		await interaction.editReply({
+			embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
+			components: result.success ? getTimetableActions(cls, inputMoment) : [],
+		});
+	}
 }
 
 export default {
@@ -171,6 +180,14 @@ export default {
 			embeds: [result.toEmbed()],
 			components: result.success ? getTimetableActions(inputCls, inputMoment) : [],
 		});
+		
+		const weatherWarnings = (await Warnings.fetch()).filterTyphoonOrRainstorm();
+		if (weatherWarnings.length) {
+			await interaction.editReply({
+				embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
+				components: result.success ? getTimetableActions(inputCls, inputMoment) : [],
+			});
+		}
 	},
 
 	async handleButton(interaction: ButtonInteraction, customId: string, ...args: string[]) {
