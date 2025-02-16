@@ -69,7 +69,7 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
 
                 const sectionsBlock = data.sections.map(section => {
                     if (section.timeslotType === TimeslotType.Lesson) return `<t:${section.startTime.unix()}:t> ${section.title}`; // Show the time for lessons
-                    return "-# " + dividerWithText("00:00 " + section.title ?? "").replace("00:00", `<t:${section.startTime.unix()}:t>`); // Show the time for non-lessons, in small font
+                    return "-# " + dividerWithText("00:00 " + (section.title ?? "")).replace("00:00", `<t:${section.startTime.unix()}:t>`); // Show the time for non-lessons, in small font
                 }).join("\n");
                 const dateBlock = `### ${data.sections[0].startTime.format("ddd, DD MMM YYYY")} (Day ${DayOfCycle[data.dayOfCycle]})`; // The date, in heading3 font
 
