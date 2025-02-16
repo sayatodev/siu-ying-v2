@@ -1,3 +1,4 @@
+import process from 'node:process';
 import type { ButtonInteraction, ChatInputCommandInteraction, StringSelectMenuInteraction } from 'discord.js';
 import {
 	ActionRowBuilder,
@@ -15,7 +16,6 @@ import { CONFIG } from '../config.js';
 import { SiuYingEmbed } from '../util/embed.js';
 import SettingsViewCommand from './settings/view.subcommand.js';
 import type { Command } from './index.js';
-
 // Get the timetable actions (buttons and select menus)
 export const getTimetableActions = (cls: string, date: Moment) => [
 	new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -51,43 +51,69 @@ export async function customExecute(
 	cls: string,
 	inputMoment: Moment,
 ) {
-	await interaction.deferReply();
 	const user = await User.fetch(interaction.user.id);
+	let respondMode: 'edit' | 'reply' = 'reply'; // Default behavior is to reply
 
-	const query = new TimetableQuery(interaction, cls, inputMoment, user);
-	const result = await query.execute();
-
-	// If the original message where the button/select menu was pressed is requested by the same user, do not create a new message.
+	// Determine if the original message should be edited instead of replying
+	type InteractionWithMessage = ButtonInteraction | StringSelectMenuInteraction;
 	if (interaction.isButton() || interaction.isStringSelectMenu()) {
 		const originalMessage = interaction.message;
-		if (originalMessage && originalMessage.author.id === interaction.user.id) {
-			try {
-				await originalMessage.edit({
-					embeds: [result.toEmbed()],
-					components: result.success ? getTimetableActions(cls, inputMoment) : [],
-				});
-				await interaction.deferUpdate();
-			} catch {
-				await interaction.editReply({
-					embeds: [result.toEmbed()],
-					components: result.success ? getTimetableActions(cls, inputMoment) : [],
-				});
-			}
+		if (
+			originalMessage &&
+			originalMessage.author.id === process.env.APPLICATION_ID && // Check if the original message is a reply by the bot
+			originalMessage.embeds.length >= 1 && // Check if the original message has an embed
+			originalMessage.embeds[0].footer?.text.includes(interaction.user.tag) // Check if the original message is requested by the same user
+		) {
+			respondMode = 'edit'; // If the original message is requested by the same user, edit the original message
 		}
 	}
 
-	// The interaction is either from a new user, or it's a new event (e.g. ChatInputCommand)
-	await interaction.editReply({
-		embeds: [result.toEmbed()],
-		components: result.success ? getTimetableActions(cls, inputMoment) : [],
-	});
-		
+	if (respondMode === 'edit') {
+		// await (interaction as InteractionWithMessage).message.edit({
+		// 	components: [],
+		// 	embeds: [new SiuYingEmbed({ user: interaction.user }).setColor('Yellow').setDescription('Loading...')],
+		// });
+		await (interaction as InteractionWithMessage).deferUpdate();
+	} else {
+		await interaction.deferReply();
+	}
+
+	// Execute the query
+	const query = new TimetableQuery(interaction, cls, inputMoment, user);
+	const result = await query.execute();
+
+	switch (respondMode) {
+		case 'edit':
+			await (interaction as InteractionWithMessage).message.edit({
+				embeds: [result.toEmbed()],
+				components: result.success ? getTimetableActions(cls, inputMoment) : [],
+			});
+			break;
+		case 'reply':
+			await interaction.editReply({
+				embeds: [result.toEmbed()],
+				components: result.success ? getTimetableActions(cls, inputMoment) : [],
+			});
+			break;
+	}
+
+	// Further update weather warnings if there are any
 	const weatherWarnings = (await Warnings.fetch()).filterTyphoonOrRainstorm();
 	if (weatherWarnings.length) {
-		await interaction.editReply({
-			embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
-			components: result.success ? getTimetableActions(cls, inputMoment) : [],
-		});
+		switch (respondMode) {
+			case 'edit':
+				await (interaction as InteractionWithMessage).message.edit({
+					embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
+					components: result.success ? getTimetableActions(cls, inputMoment) : [],
+				});
+				break;
+			case 'reply':
+				await interaction.editReply({
+					embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
+					components: result.success ? getTimetableActions(cls, inputMoment) : [],
+				});
+				break;
+		}
 	}
 }
 
@@ -180,7 +206,7 @@ export default {
 			embeds: [result.toEmbed()],
 			components: result.success ? getTimetableActions(inputCls, inputMoment) : [],
 		});
-		
+
 		const weatherWarnings = (await Warnings.fetch()).filterTyphoonOrRainstorm();
 		if (weatherWarnings.length) {
 			await interaction.editReply({
