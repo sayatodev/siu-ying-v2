@@ -17,5 +17,5 @@
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
 	"npm.packageManager": "pnpm",
-	"cSpell.words": ["BAFS", "interactionaction", "Supabase", "Timeslot"]
+	"cSpell.words": ["BAFS", "interactionaction", "Supabase", "Timeslot", "SiuYing"]
 }
