@@ -132,3 +132,11 @@ dist
 # Cached api data
 data/apiCalendar.json
 data/apiSchedules.json
+
+# Temporary files
+tmp.js
+tmp.ts 
+tmp.txt
+
+# Pdf files
+data/**/20*.pdf
