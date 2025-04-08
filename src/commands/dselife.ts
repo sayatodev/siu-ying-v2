@@ -74,7 +74,7 @@ export default {
 				return `[${pp}](https://dse.life/static/pp/${subj}/dse/${year}/${pp}.pdf)`;
 			}).join('  ');
 			await interaction.editReply({
-				content: `## ${year} ${subj}\nSearch Results:\n${body}\n-# This command is only a search tool. We do not host any files.`,
+				content: `## ${year} ${subj}\nSearch Results:\n${body}\n-# This command is only a search tool. We do not host any files. Links above may be broken or become invalid anytime.`
 			});
 		} catch (error) {
 			console.error(error);
