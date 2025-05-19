@@ -32,7 +32,7 @@ const TimeslotsData = {
 // Try to make an admin command to update the timeslot type date ranges
 function getTimeslotsOfDay(date: Moment) {
     // on or before 24/9, summer time
-    if (date.isBefore("2024-09-24")) return TimeslotsData.SUMMER_TIME;
+    if (date.isAfter("2025-05-17") && date.isBefore("2025-09-24")) return TimeslotsData.SUMMER_TIME;
     return TimeslotsData.NORMAL_TIME;
 }
 
