@@ -64,10 +64,12 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
         const { data } = this as TimetableQueryResult<"Success">;
         switch (data.type) {
             case DayType.HOLIDAY:
-                return new SiuYingEmbed({ user: this.query.interaction.user }).setColor("Green").setTitle(`${this.query.query.date.format("YYYY-MM-DD")} - Holiday`).setDescription("No school on this day! Enjoy your holiday.")
-                    .addFields(
-                        { name: "Events", value: data.eventSlots ? Object.entries(data.eventSlots).map(([slotName, events]) => `# ${slotName}\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n") : "No events" },
-                    );
+                return new SiuYingEmbed({ user: this.query.interaction.user }).setColor("Green").setTitle(`${this.query.query.date.format("YYYY-MM-DD")} - Holiday`)
+                    .setDescription(
+                        "No school on this day! Enjoy your holiday.\n### Events\n"
+                        + (data.eventSlots?.length
+                            ? Object.entries(data.eventSlots).map(([slotName, events]) => `**${slotName}**\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n")
+                            : "No events"))
 
             case DayType.SCHOOL_DAY: {
                 const divider = "────────────────────";
@@ -89,11 +91,13 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
                 return new SiuYingEmbed({ user: this.query.interaction.user })
                     .setColor("Blue")
                     .setTitle(`🗓️ Timetable for ${this.query.query.cls}`)
-                    .setDescription([dateBlock, sectionsBlock].join("\n"))
+                    .setDescription(
+                        [dateBlock, sectionsBlock].join("\n")
+                        + "\n### Events\n"
+                        + (data.eventSlots?.length
+                            ? Object.entries(data.eventSlots).map(([slotName, events]) => `**${slotName}**\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n")
+                            : "No events"))
                     .setThumbnail("https://i.imgur.com/MteV7Gv.png")
-                    .addFields(
-                        { name: "Events", value: data.eventSlots ? Object.entries(data.eventSlots).map(([slotName, events]) => `# ${slotName}\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n") : "No events" },
-                    );
             }
 
             default:

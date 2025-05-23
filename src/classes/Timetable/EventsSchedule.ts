@@ -91,7 +91,12 @@ export default class EventsSchedule {
 
                 const otherActivities = event["Other Activities (School circulars)"];
                 if (otherActivities) {
-                    otherEvents.push(new Event(otherActivities));
+                    for (const activity of otherActivities.split("\n")) {
+                        const eventData = activity.trim();
+                        if (eventData) {
+                            otherEvents.push(new Event(eventData));
+                        }
+                    }
                 }
             }
 
