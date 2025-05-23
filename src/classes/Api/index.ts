@@ -1,6 +1,6 @@
-import axios from "axios";
-import { CONFIG } from "../../config.js";
-import type { ApiCalendarData, ApiSchedulesData } from "../../types/timetable.js";
+import axios from 'axios';
+import { CONFIG } from '../../config.js';
+import type { ApiCalendarData, ApiSchedulesData } from '../../types/timetable.types.js';
 
 const config = CONFIG.API;
 
@@ -13,7 +13,7 @@ export const Api = {
 	},
 
 	// Get the timetable for a class from API
-	async getTimetable(cls: string = ""): Promise<ApiSchedulesData> {
+	async getTimetable(cls: string = ''): Promise<ApiSchedulesData> {
 		const response = await axios.get<ApiSchedulesData>(`${config.BASE_URL}${config.ROUTES.TIMETABLE}/${cls}`);
 		return response.data;
 	},

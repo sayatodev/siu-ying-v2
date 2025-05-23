@@ -17,5 +17,8 @@
 	"files.insertFinalNewline": true,
 	"files.eol": "\n",
 	"npm.packageManager": "pnpm",
-	"cSpell.words": ["BAFS", "interactionaction", "Supabase", "Timeslot", "SiuYing"]
+	"cSpell.words": ["BAFS", "interactionaction", "Supabase", "Timeslot", "SiuYing"],
+	"[typescript]": {
+		"editor.defaultFormatter": "vscode.typescript-language-features"
+	}
 }

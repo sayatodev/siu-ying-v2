@@ -47,3 +47,6 @@ SUPABASE_SERVICE_KEY=XXXXXX-YOUR-SERVICE-ROLE-KEY-XXXXXXXXXX
   <summary>What does this mean? What can I do with this code?</summary>
   <i>You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.</i>
 </details>
+
+### Remarks
+Some of the data, for example events scheduling data, are excluded from this repository due to privacy concerns.

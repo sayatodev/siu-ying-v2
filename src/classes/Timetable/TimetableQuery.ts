@@ -1,13 +1,21 @@
 import type { ButtonInteraction, CommandInteraction, StringSelectMenuInteraction } from "discord.js";
 import type { Moment } from "moment-timezone";
 import { CONFIG } from "../../config.js";
+import _Events from "../../data/events_20250524.json" with { type: "json" };
 import { DayOfCycle, DayType, OtherDay, TimeslotType } from "../../enums/calendar.js";
+import type { EventsDataJSON } from "../../types/general.types.js";
 import { SiuYingEmbed } from "../../util/embed.js";
 import type { User } from "../Database/User.js";
 import { Calendar } from "./Calendar.js";
+import type { FormEvent, Event } from "./EventsSchedule.js";
+import EventsSchedule from "./EventsSchedule.js";
 import { Schedules } from "./Schedules.js";
 import type { Section } from "./Section.js";
 import { Timeslot } from "./Timeslots.js";
+
+const Events = _Events as EventsDataJSON;
+
+type EventSlots = { [slotName: string]: Array<Event | FormEvent> };
 
 // Result of a timetable query
 class TimetableQueryResult<status extends "Error" | "Success"> {
@@ -17,9 +25,11 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
 
     public readonly data: status extends "Success" ? {
         dayOfCycle: DayOfCycle;
+        eventSlots?: EventSlots;
         sections: Section[];
         type: DayType.SCHOOL_DAY;
     } | {
+        eventSlots?: EventSlots;
         type: DayType.HOLIDAY;
     } : string;
 
@@ -27,9 +37,9 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
         query: TimetableQuery,
         success: status extends "Success" ? true : false,
         data: status extends "Success" ? {
-            dayOfCycle: DayOfCycle; sections: Section[]; type: DayType.SCHOOL_DAY;
+            dayOfCycle: DayOfCycle; eventSlots?: EventSlots; sections: Section[]; type: DayType.SCHOOL_DAY;
         } | {
-            type: DayType.HOLIDAY;
+            eventSlots?: EventSlots; type: DayType.HOLIDAY;
         } : string
     ) {
         this.query = query;
@@ -54,7 +64,10 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
         const { data } = this as TimetableQueryResult<"Success">;
         switch (data.type) {
             case DayType.HOLIDAY:
-                return new SiuYingEmbed({ user: this.query.interaction.user }).setColor("Green").setTitle(`${this.query.query.date.format("YYYY-MM-DD")} - Holiday`).setDescription("No school on this day! Enjoy your holiday.");
+                return new SiuYingEmbed({ user: this.query.interaction.user }).setColor("Green").setTitle(`${this.query.query.date.format("YYYY-MM-DD")} - Holiday`).setDescription("No school on this day! Enjoy your holiday.")
+                    .addFields(
+                        { name: "Events", value: data.eventSlots ? Object.entries(data.eventSlots).map(([slotName, events]) => `# ${slotName}\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n") : "No events" },
+                    );
 
             case DayType.SCHOOL_DAY: {
                 const divider = "────────────────────";
@@ -78,6 +91,9 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
                     .setTitle(`🗓️ Timetable for ${this.query.query.cls}`)
                     .setDescription([dateBlock, sectionsBlock].join("\n"))
                     .setThumbnail("https://i.imgur.com/MteV7Gv.png")
+                    .addFields(
+                        { name: "Events", value: data.eventSlots ? Object.entries(data.eventSlots).map(([slotName, events]) => `# ${slotName}\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n") : "No events" },
+                    );
             }
 
             default:
@@ -155,16 +171,33 @@ export class TimetableQuery {
             }
         });
 
+        // Find activites for the day
+        const events = Events.filter(event =>
+            event.Year === this.query.date.year() &&
+            event.Month === this.query.date.month() + 1 &&
+            event.Date === this.query.date.date()
+        )
+        const eventsSchedule = new EventsSchedule(events);
+        const targetForm = `S${this.query.cls.charAt(0)}`;
+        if (!["S1", "S2", "S3", "S4", "S5", "S6"].includes(targetForm)) {
+            // If the class is not a valid form, return an error response
+            return this.finish(false, "Invalid form");
+        }
+
+        const eventSlots = eventsSchedule.getEvents(targetForm as "S1" | "S2" | "S3" | "S4" | "S5" | "S6");
+
         // Return the a successful response with the sections and day type
-        return this.finish(true, { sections, type: DayType.SCHOOL_DAY, dayOfCycle });
+        return this.finish(true, { sections, type: DayType.SCHOOL_DAY, dayOfCycle, eventSlots });
     }
 
     // Should only be called in execute(), this is a helper function to finish the query with a TimetableQueryResult
     private finish(success: boolean, data: string | {
         dayOfCycle: DayOfCycle;
+        eventSlots?: EventSlots;
         sections: Section[];
         type: DayType.SCHOOL_DAY;
     } | {
+        eventSlots?: EventSlots;
         type: DayType.HOLIDAY;
     }) {
         // Return an instance of TimetableQueryResult with the query, success status, and data
