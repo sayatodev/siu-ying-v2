@@ -67,8 +67,8 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
                 return new SiuYingEmbed({ user: this.query.interaction.user }).setColor("Green").setTitle(`${this.query.query.date.format("YYYY-MM-DD")} - Holiday`)
                     .setDescription(
                         "No school on this day! Enjoy your holiday.\n### Events\n"
-                        + (data.eventSlots?.length
-                            ? Object.entries(data.eventSlots).map(([slotName, events]) => `**${slotName}**\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n")
+                        + (Object.keys(data.eventSlots ?? {}).length
+                            ? Object.entries(data.eventSlots as EventSlots).map(([slotName, events]) => `**${slotName}**\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n")
                             : "No events"))
 
             case DayType.SCHOOL_DAY: {
@@ -94,8 +94,8 @@ class TimetableQueryResult<status extends "Error" | "Success"> {
                     .setDescription(
                         [dateBlock, sectionsBlock].join("\n")
                         + "\n### Events\n"
-                        + (data.eventSlots?.length
-                            ? Object.entries(data.eventSlots).map(([slotName, events]) => `**${slotName}**\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n")
+                        + (Object.keys(data.eventSlots ?? {}).length
+                            ? Object.entries(data.eventSlots as EventSlots).map(([slotName, events]) => `**${slotName}**\n ${events.map(event => "* " + event.toDisplay()).join("\n")}`).join("\n")
                             : "No events"))
                     .setThumbnail("https://i.imgur.com/MteV7Gv.png")
             }
