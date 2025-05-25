@@ -17,10 +17,17 @@ import { SiuYingEmbed } from '../util/embed.js';
 import SettingsViewCommand from './settings/view.subcommand.js';
 import type { Command } from './index.js';
 // Get the timetable actions (buttons and select menus)
-export const getTimetableActions = (cls: string, date: Moment) => [
+export const getTimetableActions = (cls: string, date: Moment, eventsExpanded: boolean) => [
 	new ActionRowBuilder<ButtonBuilder>().addComponents(
 		new ButtonBuilder()
-			.setCustomId(`timetable:previous:${cls}:${date.format('YYYY-MM-DD')}`)
+			.setCustomId(`timetable:expand_events:${cls}:${date.format('YYYY-MM-DD')}:${!eventsExpanded}`)
+			.setEmoji(eventsExpanded ? '1038788870373900358' : '1376213042601394197')
+			.setLabel(eventsExpanded ? '收起活動' : '展開活動')
+			.setStyle(ButtonStyle.Secondary),
+	),
+	new ActionRowBuilder<ButtonBuilder>().addComponents(
+		new ButtonBuilder()
+			.setCustomId(`timetable:previous:${cls}:${date.format('YYYY-MM-DD')}:${eventsExpanded}`)
 			.setEmoji('1013803101129543690')
 			.setStyle(ButtonStyle.Primary),
 		new ButtonBuilder()
@@ -29,10 +36,10 @@ export const getTimetableActions = (cls: string, date: Moment) => [
 			.setStyle(ButtonStyle.Primary)
 			.setDisabled(true),
 		new ButtonBuilder()
-			.setCustomId(`timetable:next:${cls}:${date.format('YYYY-MM-DD')}`)
+			.setCustomId(`timetable:next:${cls}:${date.format('YYYY-MM-DD')}:${eventsExpanded}`)
 			.setEmoji('1013802785910833234')
 			.setStyle(ButtonStyle.Primary),
-		new ButtonBuilder().setCustomId(`timetable:today:${cls}`).setLabel('今日').setStyle(ButtonStyle.Primary),
+		new ButtonBuilder().setCustomId(`timetable:today:${cls}:${eventsExpanded}`).setLabel('今日').setStyle(ButtonStyle.Primary),
 		new ButtonBuilder().setCustomId(`timetable:settings`).setEmoji('⚙️').setStyle(ButtonStyle.Secondary),
 	),
 	new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
@@ -50,6 +57,7 @@ export async function customExecute(
 	interaction: ButtonInteraction | ChatInputCommandInteraction | StringSelectMenuInteraction,
 	cls: string,
 	inputMoment: Moment,
+	eventsExpanded: boolean = false,
 ) {
 	const user = await User.fetch(interaction.user.id);
 	let respondMode: 'edit' | 'reply' = 'reply'; // Default behavior is to reply
@@ -79,20 +87,20 @@ export async function customExecute(
 	}
 
 	// Execute the query
-	const query = new TimetableQuery(interaction, cls, inputMoment, user);
+	const query = new TimetableQuery(interaction, cls, inputMoment, user, eventsExpanded);
 	const result = await query.execute();
 
 	switch (respondMode) {
 		case 'edit':
 			await (interaction as InteractionWithMessage).message.edit({
 				embeds: [result.toEmbed()],
-				components: result.success ? getTimetableActions(cls, inputMoment) : [],
+				components: result.success ? getTimetableActions(cls, inputMoment, eventsExpanded) : [],
 			});
 			break;
 		case 'reply':
 			await interaction.editReply({
 				embeds: [result.toEmbed()],
-				components: result.success ? getTimetableActions(cls, inputMoment) : [],
+				components: result.success ? getTimetableActions(cls, inputMoment, eventsExpanded) : [],
 			});
 			break;
 	}
@@ -104,13 +112,13 @@ export async function customExecute(
 			case 'edit':
 				await (interaction as InteractionWithMessage).message.edit({
 					embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
-					components: result.success ? getTimetableActions(cls, inputMoment) : [],
+					components: result.success ? getTimetableActions(cls, inputMoment, eventsExpanded) : [],
 				});
 				break;
 			case 'reply':
 				await interaction.editReply({
 					embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
-					components: result.success ? getTimetableActions(cls, inputMoment) : [],
+					components: result.success ? getTimetableActions(cls, inputMoment, eventsExpanded) : [],
 				});
 				break;
 		}
@@ -204,14 +212,14 @@ export default {
 		const result = await query.execute();
 		await interaction.editReply({
 			embeds: [result.toEmbed()],
-			components: result.success ? getTimetableActions(inputCls, inputMoment) : [],
+			components: result.success ? getTimetableActions(inputCls, inputMoment, false) : [],
 		});
 
 		const weatherWarnings = (await Warnings.fetch()).filterTyphoonOrRainstorm();
 		if (weatherWarnings.length) {
 			await interaction.editReply({
 				embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
-				components: result.success ? getTimetableActions(inputCls, inputMoment) : [],
+				components: result.success ? getTimetableActions(inputCls, inputMoment, false) : [],
 			});
 		}
 	},
@@ -262,6 +270,27 @@ export default {
 			case 'settings': {
 				// Basically calling the settings view command
 				await SettingsViewCommand.execute(interaction);
+				return;
+			}
+
+			case 'expand_events': {
+				const [cls, date, targetState] = args;
+				if (!cls || !date || targetState === undefined) {
+					// If either class or date is not provided, return an error message. As the customIds should all include both class and date, this should not happen.
+					return void (await interaction.reply({
+						embeds: [
+							new SiuYingEmbed({ user: interaction.user })
+								.setColor('Red')
+								.setTitle('Invalid Action')
+								.setDescription('An unknown error occurred'),
+						],
+					}));
+				}
+
+				// Convert targetState to boolean
+				const eventsExpanded = (targetState === 'true');
+
+				await customExecute(interaction, cls, moment.tz(date, 'Asia/Hong_Kong'), eventsExpanded);
 				return;
 			}
 

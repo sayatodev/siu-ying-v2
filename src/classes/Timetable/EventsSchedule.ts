@@ -1,17 +1,23 @@
 import type { EventsDataJSON } from "../../types/general.types.js";
+import { maxLength } from "../../util/strings.js";
 
 type AllFormsEvents = { S1: FormEvent[], S2: FormEvent[], S3: FormEvent[], S4: FormEvent[], S5: FormEvent[], S6: FormEvent[] };
 
 export class FormEvent {
     public readonly name: string;
 
+    public readonly form: string;
+
     public readonly section?: string;
 
-    public constructor(data: string) {
-        const sectionRegex = /_L(\d)$/;
+    public constructor(form: string, data: string) {
+        this.form = form;
+
+        const sectionRegex = /_L(?<section>\d)\s*$/;
         const sectionMatch = sectionRegex.exec(data);
-        if (sectionMatch) {
-            this.section = sectionMatch[1];
+        const section = sectionMatch?.groups?.section;
+        if (section) {
+            this.section = section;
             this.name = data.replace(sectionRegex, "");
         } else {
             this.name = data;
@@ -19,7 +25,7 @@ export class FormEvent {
     }
 
     public toDisplay() {
-        return this.name.replaceAll('_', "") + (this.section ? ` (Lesson ${this.section})` : "");
+        return this.name.replaceAll('_', " ") + (this.section ? ` (Lesson ${this.section})` : "");
     }
 }
 
@@ -38,7 +44,7 @@ export class Event {
         const regex = /^(?<name>.+)\s\[(?<start>\d{1,2}:\d{2}) - (?<end>\d{1,2}:\d{2})]\s?_(?<location>[^_]+)_(?<teacher>[^_]+)_(?<circular>.+)$/;
         const match = regex.exec(data);
         if (match) {
-            this.name = match.groups?.name.replaceAll('_', "") ?? "";
+            this.name = match.groups?.name.replaceAll('_', " ") ?? "";
             this.timeslot = `${match.groups?.start} - ${match.groups?.end}`;
             this.location = match.groups?.location;
             this.teacher = match.groups?.teacher;
@@ -82,12 +88,12 @@ export default class EventsSchedule {
             const otherEvents: Event[] = [];
             for (const event of slotEvents) {
                 const { S1, S2, S3, S4, S5, S6 } = event;
-                if (S1) formEvents.S1.push(new FormEvent(S1));
-                if (S2) formEvents.S2.push(new FormEvent(S2));
-                if (S3) formEvents.S3.push(new FormEvent(S3));
-                if (S4) formEvents.S4.push(new FormEvent(S4));
-                if (S5) formEvents.S5.push(new FormEvent(S5));
-                if (S6) formEvents.S6.push(new FormEvent(S6));
+                if (S1) formEvents.S1.push(new FormEvent("S1", S1));
+                if (S2) formEvents.S2.push(new FormEvent("S2", S2));
+                if (S3) formEvents.S3.push(new FormEvent("S3", S3));
+                if (S4) formEvents.S4.push(new FormEvent("S4", S4));
+                if (S5) formEvents.S5.push(new FormEvent("S5", S5));
+                if (S6) formEvents.S6.push(new FormEvent("S6", S6));
 
                 const otherActivities = event["Other Activities (School circulars)"];
                 if (otherActivities) {
@@ -124,5 +130,53 @@ export default class EventsSchedule {
         return Object.fromEntries(
             Object.entries(events).filter(([_, events]) => events.length > 0)
         ); // Filter out empty slots
+    }
+
+    private getEventsDisplayShort(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6") {
+        const events = this.getEvents(filterForm);
+        if (!events || Object.keys(events).length === 0) {
+            return "### Events\nNo events";
+        }
+
+        let display = "### Events\n";
+        for (const [slotName, slotEvents] of Object.entries(events)) {
+            display += `**${slotName}**: `
+            
+            const slicedEvents = slotEvents.slice(0, 3);
+            display += slicedEvents.map(
+                event => maxLength(event.name, 10, { alpha: 0.5 })
+            ).join(", ");
+
+            if (slotEvents.length > 3) {
+                display += ` - _and ${slotEvents.length - 3} more_`;
+            }
+            
+            display += "\n";
+        }
+
+        return display;
+    }
+
+    private getEventsDisplayLong(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6") {
+        const events = this.getEvents(filterForm);
+        if (!events || Object.keys(events).length === 0) {
+            return "### Events\nNo events";
+        }
+
+        let display = "### Events\n";
+        for (const [slotName, slotEvents] of Object.entries(events)) {
+            display += `**${slotName}**\n`;
+            for (const event of slotEvents) {
+                display += `* ${event.toDisplay()}\n`;
+            }
+        }
+
+        return display;
+    }
+
+    public getEventsDisplay(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6", long = false): string {
+        return long
+            ? this.getEventsDisplayLong(filterForm)
+            : this.getEventsDisplayShort(filterForm);
     }
 }
