@@ -13,12 +13,12 @@ export class FormEvent {
     public constructor(form: string, data: string) {
         this.form = form;
 
-        const sectionRegex = /_L(?<section>\d)\s*$/;
+        const sectionRegex = /_L(?<section>\d)(?:$|\D)/;
         const sectionMatch = sectionRegex.exec(data);
         const section = sectionMatch?.groups?.section;
         if (section) {
             this.section = section;
-            this.name = data.replace(sectionRegex, "");
+            this.name = data.replace(`_L${section}`, "");
         } else {
             this.name = data;
         }
@@ -88,12 +88,22 @@ export default class EventsSchedule {
             const otherEvents: Event[] = [];
             for (const event of slotEvents) {
                 const { S1, S2, S3, S4, S5, S6 } = event;
-                if (S1) formEvents.S1.push(new FormEvent("S1", S1));
-                if (S2) formEvents.S2.push(new FormEvent("S2", S2));
-                if (S3) formEvents.S3.push(new FormEvent("S3", S3));
-                if (S4) formEvents.S4.push(new FormEvent("S4", S4));
-                if (S5) formEvents.S5.push(new FormEvent("S5", S5));
-                if (S6) formEvents.S6.push(new FormEvent("S6", S6));
+                const formEventsData = [S1, S2, S3, S4, S5, S6];
+                
+                // Loop through each form
+                for (const [formIdx, eventData] of formEventsData.entries()) {
+                    const form = `S${formIdx + 1}` as "S1" | "S2" | "S3" | "S4" | "S5" | "S6";
+                    if (eventData) {
+                        const thisFormEvents = eventData.split(" /\n")
+                            .map(data => data.trim())
+                            .map(data => new FormEvent(form, data));
+                            
+                        // Loop through each event in the form
+                        for (const event of thisFormEvents) {
+                            formEvents[form].push(event);
+                        }
+                    }
+                }
 
                 const otherActivities = event["Other Activities (School circulars)"];
                 if (otherActivities) {
@@ -141,7 +151,7 @@ export default class EventsSchedule {
         let display = "### Events\n";
         for (const [slotName, slotEvents] of Object.entries(events)) {
             display += `**${slotName}**: `
-            
+
             const slicedEvents = slotEvents.slice(0, 3);
             display += slicedEvents.map(
                 event => maxLength(event.name, 10, { alpha: 0.5 })
@@ -150,7 +160,7 @@ export default class EventsSchedule {
             if (slotEvents.length > 3) {
                 display += ` - _and ${slotEvents.length - 3} more_`;
             }
-            
+
             display += "\n";
         }
 
