@@ -89,7 +89,7 @@ export default class EventsSchedule {
             for (const event of slotEvents) {
                 const { S1, S2, S3, S4, S5, S6 } = event;
                 const formEventsData = [S1, S2, S3, S4, S5, S6];
-                
+
                 // Loop through each form
                 for (const [formIdx, eventData] of formEventsData.entries()) {
                     const form = `S${formIdx + 1}` as "S1" | "S2" | "S3" | "S4" | "S5" | "S6";
@@ -97,7 +97,7 @@ export default class EventsSchedule {
                         const thisFormEvents = eventData.split(" /\n")
                             .map(data => data.trim())
                             .map(data => new FormEvent(form, data));
-                            
+
                         // Loop through each event in the form
                         for (const event of thisFormEvents) {
                             formEvents[form].push(event);
@@ -154,7 +154,7 @@ export default class EventsSchedule {
 
             const slicedEvents = slotEvents.slice(0, 3);
             display += slicedEvents.map(
-                event => maxLength(event.name, 10, { alpha: 0.5 })
+                event => maxLength(event.name, 10, { halfWidthFactor: 0.5 })
             ).join(", ");
 
             if (slotEvents.length > 3) {
