@@ -70,7 +70,7 @@ export async function customExecute(
 			originalMessage &&
 			originalMessage.author.id === process.env.APPLICATION_ID && // Check if the original message is a reply by the bot
 			originalMessage.embeds.length >= 1 && // Check if the original message has an embed
-			originalMessage.embeds[1].footer?.text.includes(interaction.user.tag) // Check if the original message is requested by the same user
+			originalMessage.embeds[originalMessage.embeds.length - 1].footer?.text.includes(interaction.user.tag) // Check if the original message is requested by the same user
 		) {
 			respondMode = 'edit'; // If the original message is requested by the same user, edit the original message
 		}
