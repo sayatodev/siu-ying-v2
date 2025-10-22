@@ -9,7 +9,7 @@ export type HkoWarningCode<Property extends HkoWarningProperty> =
     : Property extends "WRAIN" ? "WRAINA" | "WRAINB" | "WRAINR"
     : Property extends "WFNTSA" ? "WFNTSA"
     : Property extends "WL" ? "WL"
-    : Property extends "WTCSGNL" ? "TC1" | "TC3" | "TC8NE" | "TC8NW" | "TC8SE" | "TC8SW" | "TC9" | "TC10"
+    : Property extends "WTCSGNL" ? "CANCEL" | "TC1" | "TC3" | "TC8NE" | "TC8NW" | "TC8SE" | "TC8SW" | "TC9" | "TC10"
     : Property extends "WTMW" ? "WTMW"
     : Property extends "WTS" ? "WTS" : never
 

@@ -111,13 +111,13 @@ export async function customExecute(
 		switch (respondMode) {
 			case 'edit':
 				await (interaction as InteractionWithMessage).message.edit({
-					embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
+					embeds: [...weatherWarnings.toEmbeds(), result.toEmbed()],
 					components: result.success ? getTimetableActions(cls, inputMoment, eventsExpanded) : [],
 				});
 				break;
 			case 'reply':
 				await interaction.editReply({
-					embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
+					embeds: [...weatherWarnings.toEmbeds(), result.toEmbed()],
 					components: result.success ? getTimetableActions(cls, inputMoment, eventsExpanded) : [],
 				});
 				break;
@@ -218,7 +218,7 @@ export default {
 		const weatherWarnings = (await Warnings.fetch()).filterTyphoonOrRainstorm();
 		if (weatherWarnings.length) {
 			await interaction.editReply({
-				embeds: [weatherWarnings.toEmbed(), result.toEmbed()],
+				embeds: [...weatherWarnings.toEmbeds(), result.toEmbed()],
 				components: result.success ? getTimetableActions(inputCls, inputMoment, false) : [],
 			});
 		}
