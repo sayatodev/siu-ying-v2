@@ -55,7 +55,7 @@ export class Calendar {
 			return null;
 		}
 
-		if (day === consts.OTHER_DAYS.HOLIDAY) {
+		if (day === consts.OTHER_DAYS.HOLIDAY || day === consts.OTHER_DAYS.HOLIDAY_ALT) {
 			// Return holiday if the day is a holiday
 			return OtherDay.HOLIDAY;
 		}

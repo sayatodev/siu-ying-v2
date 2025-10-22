@@ -1,5 +1,5 @@
 export enum DayOfCycle { A, B, C, D, E, F, G, H }
-export enum OtherDay { HOLIDAY = "/" }
+export enum OtherDay { HOLIDAY = "/", HOLIDAY_ALT = "-" }
 
 export enum DayType {
     SCHOOL_DAY,

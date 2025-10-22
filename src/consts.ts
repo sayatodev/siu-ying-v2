@@ -6,6 +6,7 @@ export const CONSTS = {
         "DAYS_OF_CYCLE": ["A", "B", "C", "D", "E", "F", "G", "H"] as Array<keyof typeof DayOfCycle>,
         "OTHER_DAYS": {
             "HOLIDAY": "/" as const,
+            "HOLIDAY_ALT": "-" as const
         },
         "STRINGS": {
             "DAY_OF_CYCLE": {
@@ -141,6 +142,7 @@ export const CONSTS = {
     "EMOJIS": {
         "HKO": {
             "WARNINGS": {
+                "CANCEL": ":negative_squared_cross_mark:",
                 "TC1": "<:tc1:1299378316184387584>",
                 "TC3": "<:tc3:1299378319074001036>",
                 "TC8NE": "<:tc8ne:1299378323725488189>",

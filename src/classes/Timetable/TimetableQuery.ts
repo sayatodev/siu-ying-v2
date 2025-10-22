@@ -146,7 +146,7 @@ export class TimetableQuery {
             targetForm as "S1" | "S2" | "S3" | "S4" | "S5" | "S6",
             this.query.eventsExpanded);
 
-        if (dayOfCycle === OtherDay.HOLIDAY) {
+        if (dayOfCycle === OtherDay.HOLIDAY || dayOfCycle === OtherDay.HOLIDAY_ALT) {
             // If the day is a holiday, return a holiday response
 
             return this.finish(true, { type: DayType.HOLIDAY, eventsDisplay });
