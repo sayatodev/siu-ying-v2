@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { CONFIG } from '../../config.js';
+import type { ApiEventsSchedulesData } from '../../types/general.types.js';
 import type { ApiCalendarData, ApiSchedulesData } from '../../types/timetable.types.js';
 
 const config = CONFIG.API;
@@ -17,4 +18,10 @@ export const Api = {
 		const response = await axios.get<ApiSchedulesData>(`${config.BASE_URL}${config.ROUTES.TIMETABLE}/${cls}`);
 		return response.data;
 	},
+
+	// Get the event schedules from API
+	async getEventsSchedules(): Promise<ApiEventsSchedulesData> {
+		const response = await axios.get<ApiEventsSchedulesData>(`${config.BASE_URL}${config.ROUTES.EVENTS_SCHEDULES}`);
+		return response.data;
+	}
 };

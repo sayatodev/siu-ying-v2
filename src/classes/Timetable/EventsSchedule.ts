@@ -1,7 +1,5 @@
-import type { EventsDataJSON } from "../../types/general.types.js";
+import type { ApiEventsSchedulesRow } from "../../types/general.types.js";
 import { maxLength } from "../../util/strings.js";
-
-type AllFormsEvents = { S1: FormEvent[], S2: FormEvent[], S3: FormEvent[], S4: FormEvent[], S5: FormEvent[], S6: FormEvent[] };
 
 export class FormEvent {
     public readonly name: string;
@@ -63,130 +61,92 @@ export class Event {
 }
 
 export default class EventsSchedule {
-    private readonly slots: Array<{
-        formEvents: AllFormsEvents;
-        name: string;
-        otherEvents: Event[];
-    }>;
+    private readonly slots: Array<[
+        string,
+        ApiEventsSchedulesRow["slots"][string]
+    ]>;
 
-    public constructor(events: EventsDataJSON) {
-        const slots: string[] = [];
-        for (const event of events) {
-            let { Slot: eventSlot } = event;
-            if (!eventSlot) eventSlot = "Other"
-            if (!slots.includes(eventSlot)) {
-                slots.push(eventSlot);
-            }
-        }
-
-        this.slots = [];
-        for (const slot of slots) {
-            const slotEvents = events.filter(event => event.Slot === slot);
-            const formEvents: AllFormsEvents = {
-                S1: [], S2: [], S3: [], S4: [], S5: [], S6: []
-            }
-            const otherEvents: Event[] = [];
-            for (const event of slotEvents) {
-                const { S1, S2, S3, S4, S5, S6 } = event;
-                const formEventsData = [S1, S2, S3, S4, S5, S6];
-
-                // Loop through each form
-                for (const [formIdx, eventData] of formEventsData.entries()) {
-                    const form = `S${formIdx + 1}` as "S1" | "S2" | "S3" | "S4" | "S5" | "S6";
-                    if (eventData) {
-                        const thisFormEvents = eventData.split(" /\n")
-                            .map(data => data.trim())
-                            .map(data => new FormEvent(form, data));
-
-                        // Loop through each event in the form
-                        for (const event of thisFormEvents) {
-                            formEvents[form].push(event);
-                        }
-                    }
-                }
-
-                const otherActivities = event["Other Activities (School circulars)"];
-                if (otherActivities) {
-                    for (const activity of otherActivities.split("\n")) {
-                        const eventData = activity.trim();
-                        if (eventData) {
-                            otherEvents.push(new Event(eventData));
-                        }
-                    }
-                }
-            }
-
-            this.slots.push({
-                name: slot,
-                formEvents,
-                otherEvents
-            });
-        }
+    public constructor(data: ApiEventsSchedulesRow) {
+        this.slots = Object.entries(data.slots)
     }
 
-    public getEvents(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6"): { [slotName: string]: Array<Event | FormEvent> } {
-        const events: { [slotName: string]: Array<Event | FormEvent> } = {};
+    public getEvents(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6") {
+        const events: {
+            [slotName: string]: {
+                events: Array<Event | FormEvent>;
+                fullName: string;
+                remarks: string[];
+            }
+        } = {};
+
         for (const slot of this.slots) {
-            events[slot.name] = [];
-            if (slot.formEvents[filterForm].length > 0) {
-                events[slot.name].push(...slot.formEvents[filterForm]);
+            const [slotId, slotData] = slot;
+            const slotEvents = [];
+
+            if (filterForm in slotData && slotData[filterForm].length > 0) {
+                for (const eventData of slotData[filterForm]) {
+                    slotEvents.push(new FormEvent(filterForm, eventData));
+                }
             }
 
-            if (slot.otherEvents.length > 0) {
-                events[slot.name].push(...slot.otherEvents);
-            }
-        }
-
-        return Object.fromEntries(
-            Object.entries(events).filter(([_, events]) => events.length > 0)
-        ); // Filter out empty slots
-    }
-
-    private getEventsDisplayShort(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6") {
-        const events = this.getEvents(filterForm);
-        if (!events || Object.keys(events).length === 0) {
-            return "### Events\nNo events";
-        }
-
-        let display = "### Events\n";
-        for (const [slotName, slotEvents] of Object.entries(events)) {
-            display += `**${slotName}**: `
-
-            const slicedEvents = slotEvents.slice(0, 3);
-            display += slicedEvents.map(
-                event => maxLength(event.name, 10, { halfWidthFactor: 0.5 })
-            ).join(", ");
-
-            if (slotEvents.length > 3) {
-                display += ` - _and ${slotEvents.length - 3} more_`;
+            if (slotData.otherActivities.length > 0) {
+                for (const eventData of slotData.otherActivities) {
+                    slotEvents.push(new Event(eventData));
+                }
             }
 
-            display += "\n";
-        }
-
-        return display;
-    }
-
-    private getEventsDisplayLong(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6") {
-        const events = this.getEvents(filterForm);
-        if (!events || Object.keys(events).length === 0) {
-            return "### Events\nNo events";
-        }
-
-        let display = "### Events\n";
-        for (const [slotName, slotEvents] of Object.entries(events)) {
-            display += `**${slotName}**\n`;
-            for (const event of slotEvents) {
-                display += `* ${event.toDisplay()}\n`;
+            if (slotEvents.length > 0) {
+                events[slotId] = {
+                    events: slotEvents,
+                    fullName: slotData.fullName,
+                    remarks: slotData.remarks,
+                }
             }
         }
 
-        return display;
+        return events;
     }
 
     public getEventsDisplay(filterForm: "S1" | "S2" | "S3" | "S4" | "S5" | "S6", long = false): string {
-        return long
-            ? this.getEventsDisplayLong(filterForm)
-            : this.getEventsDisplayShort(filterForm);
+        const events = this.getEvents(filterForm);
+        if (!events || Object.keys(events).length === 0) {
+            return "### Events\nNo events";
+        }
+
+        let display = "### Events\n";
+
+        for (const { fullName, events: slotEvents } of Object.values(events)) {
+            display += `\n**${fullName}**: ` + (long ? "\n" : "");
+
+            const slicedEvents = long ? slotEvents : slotEvents.slice(0, 3);
+            display += slicedEvents.map(
+                event => long
+                    ? event.name
+                    : maxLength(event.name, 10, { halfWidthFactor: 0.5 })
+            ).join(", ");
+
+            if (!long && slotEvents.length > 3) {
+                display += ` - _and ${slotEvents.length - 3} more_`;
+            }
+        }
+
+        const remarks = Object.values(events).flatMap(slot => slot.remarks.map(rmk => rmk.replace(/ \/$/, "")));
+        const uniqueRemarks = Array.from(new Set(remarks));
+
+        if (uniqueRemarks.length > 0) {
+            display += `\n### Remarks`;
+            for (const rmk of (long ? uniqueRemarks : uniqueRemarks.slice(0, 3))) {
+                display += `\n*_${rmk}_`;
+                if (remarks.filter(remark => remark === rmk).length === 1) {
+                    display += ` (${Object.values(events).find(slot => slot.remarks.includes(rmk))?.fullName})`;
+                }
+            }
+
+            if (!long && uniqueRemarks.length > 3) {
+                display += `\n*...and ${uniqueRemarks.length - 3} more*`;
+            }
+        }
+
+        return display;
     }
 }

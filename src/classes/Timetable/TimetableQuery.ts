@@ -1,18 +1,15 @@
 import type { ButtonInteraction, CommandInteraction, StringSelectMenuInteraction } from "discord.js";
 import type { Moment } from "moment-timezone";
 import { CONFIG } from "../../config.js";
-import _Events from "../../data/events_20250524.json" with { type: "json" };
 import { DayOfCycle, DayType, OtherDay, TimeslotType } from "../../enums/calendar.js";
-import type { EventsDataJSON } from "../../types/general.types.js";
 import { SiuYingEmbed } from "../../util/embed.js";
+import { Api } from "../Api/index.js";
 import type { User } from "../Database/User.js";
 import { Calendar } from "./Calendar.js";
 import EventsSchedule from "./EventsSchedule.js";
 import { Schedules } from "./Schedules.js";
 import type { Section } from "./Section.js";
 import { Timeslot } from "./Timeslots.js";
-
-const Events = _Events as EventsDataJSON;
 
 // Result of a timetable query
 class TimetableQueryResult<status extends "Error" | "Success"> {
@@ -130,12 +127,10 @@ export class TimetableQuery {
         }
 
         // Find activites for the day
-        const events = Events.filter(event =>
-            event.Year === this.query.date.year() &&
-            event.Month === this.query.date.month() + 1 &&
-            event.Date === this.query.date.date()
-        )
-        const eventsSchedule = new EventsSchedule(events);
+        const events = await Api.getEventsSchedules();
+        const eventsSchedule = new EventsSchedule(events.rows[
+            this.query.date.format(CONFIG.API.FORMATS.EVENT_SCHEDULES_DATE_KEY)
+        ]);
         const targetForm = `S${this.query.cls.charAt(0)}`;
         if (!["S1", "S2", "S3", "S4", "S5", "S6"].includes(targetForm)) {
             // If the class is not a valid form, return an error response
